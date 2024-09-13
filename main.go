@@ -22,15 +22,15 @@ func main() {
 	server2URL := os.Getenv("SERVER2_URL")
 	imageUrl1Out := os.Getenv("IMAGE_URL1_OUT")
 	imageUrl2Out := os.Getenv("IMAGE_URL2_OUT")
-	imageDir := os.Getenv("IMAGE_DIR")
+	profilesDir := os.Getenv("IMAGE_DIR")
 
-	folders, err := ioutil.ReadDir(imageDir)
+	folders, err := ioutil.ReadDir(profilesDir)
 	if err != nil {
 		fmt.Errorf("error reading root folder: %v", err)
 	}
 	for _, folder := range folders {
 		if folder.IsDir() {
-			folderPath := filepath.Join(imageDir, folder.Name())
+			folderPath := filepath.Join(profilesDir, folder.Name())
 			fmt.Println("Processing folder:", folderPath)
 			err := processFolder(folderPath, server1URL, server2URL, imageUrl1Out, imageUrl2Out)
 			if err != nil {
