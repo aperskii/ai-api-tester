@@ -1,0 +1,28 @@
+{
+  "params":[
+    {
+      "code":"text",
+      "type":"text",
+      "start_point":{
+        "x":0,
+        "y":0
+      },
+      "end_point":{
+        "x":0,
+        "y":0
+      },
+      "keywords":"",
+      "page_identity":1,
+      "page_number":0,
+      "parse_direction":"DESC",
+      "pi_region":{
+        "x1":0,
+        "y1":0,
+        "height":"0%"
+      },
+      "delete_line_feeds":false
+    }
+  ],
+  "route":"/pdf",
+  "type":"text_block"
+}
