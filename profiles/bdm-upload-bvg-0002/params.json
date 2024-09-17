@@ -20,7 +20,8 @@
         "y1":0,
         "height":"0%"
       },
-      "delete_line_feeds":false
+      "delete_line_feeds":false,
+      "face_height":false
     }
   ],
   "route":"/pdf",

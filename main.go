@@ -22,7 +22,7 @@ func main() {
 	server2URL := os.Getenv("SERVER2_URL")
 	imageUrl1Out := os.Getenv("IMAGE_URL1_OUT")
 	imageUrl2Out := os.Getenv("IMAGE_URL2_OUT")
-	profilesDir := os.Getenv("IMAGE_DIR")
+	profilesDir := os.Getenv("PROFILES_DIR")
 
 	folders, err := ioutil.ReadDir(profilesDir)
 	if err != nil {

@@ -49,8 +49,31 @@
         "covered_face":true,
         "hologram":false,
         "gfpgan_enhance":false,
-        "description_original":false,
-        "description_segmented":false
+        "description_llava_content":false,
+        "description_llava_object":false,
+        "face_height":false,
+        "is_enough_face":false,
+        "v2_is_enough_face":false,
+        "weapons_detection":false,
+        "grabcut":false
+      },
+      "crop_mode":"",
+      "actions":"",
+      "angle":0,
+      "rotation_center":{
+        "x":0,
+        "y":0
+      },
+      "last_crop":null,
+      "bg_drawing":{
+        "lines":null,
+        "scale_factor":0,
+        "thickness":0
+      },
+      "fg_drawing":{
+        "lines":null,
+        "scale_factor":0,
+        "thickness":0
       }
     }
   ],

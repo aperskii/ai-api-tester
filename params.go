@@ -23,4 +23,7 @@ type Blocks struct {
 	Qr2015Bvg struct {
 		Text string `json:"text"`
 	} `json:"qr2015_bvg,omitempty"`
+	Qr2015 struct {
+		Text string `json:"text"`
+	} `json:"qr2015,omitempty"`
 }
