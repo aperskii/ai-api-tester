@@ -9,6 +9,6 @@ gen
 *.csv
 /profiles/set2
 /profiles/set1
-!*/params.json
 /Result
 /test
+!/profiles/**/params.json
