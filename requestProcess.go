@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"time"
 )
 
 // ServerClient handles the communication with the servers.
@@ -37,7 +38,6 @@ func (client *ServerClient) SendImageAndGetResponse(imagePath string, params Req
 	if err != nil {
 		return &response, fmt.Errorf("failed to write to form field: %v", err)
 	}
-	fmt.Println("Request Body: ", string(jsonData))
 	imageFile, err := os.Open(imagePath)
 	if err != nil {
 		return &response, fmt.Errorf("failed to open image file: %v", err)
@@ -65,12 +65,14 @@ func (client *ServerClient) SendImageAndGetResponse(imagePath string, params Req
 	}
 	req.Header.Set("Content-Type", writer.FormDataContentType())
 
+	start := time.Now()
 	resp, err := http.DefaultClient.Do(req)
+	duration := time.Since(start)
 	if err != nil {
 		return &response, fmt.Errorf("failed to send request: %v", err)
 	}
 	defer resp.Body.Close()
-
+	fmt.Printf("Server: %s response Time: %s\n", client.URL, duration)
 	err = json.NewDecoder(resp.Body).Decode(&response)
 	if err != nil {
 		return &response, fmt.Errorf("failed to decode JSON response: %v", err)

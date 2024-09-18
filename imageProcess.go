@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"strings"
 	"sync"
 )
 
@@ -49,13 +50,12 @@ func NewImageProcessor(params RequestParam, client1URL, client2URL, imageUrl1Out
 func (ip *ImageProcessor) ProcessImage(imagePath, imageName string) error {
 	// Map to track unique differences
 	differenceMap := make(map[string]struct{})
-
 	// Use WaitGroup to handle concurrent server requests
 	var wg sync.WaitGroup
 	var resp1, resp2 *ResponseData
 	var err1, err2 error
-	wg.Add(2)
 
+	wg.Add(2)
 	// Fetch response from Server 1
 	go func() {
 		defer wg.Done()
@@ -108,14 +108,35 @@ func (ip *ImageProcessor) processImageType(resp1, resp2 *ResponseData, differenc
 		differenceMap[fmt.Sprintf("Response from: %s - has empty properties", ip.Client2.URL)] = struct{}{}
 	} else {
 		wg := &sync.WaitGroup{}
-		wg.Add(2)
+		imgPathChan := make(chan string, 2) // Buffer of 2 for the two images
 
 		// Download images concurrently
-		go ip.downloadAndCompareImage(resp1.Blocks.Photo.Properties, ip.Client1.OutUrl, "server1_", differenceMap, wg)
-		go ip.downloadAndCompareImage(resp2.Blocks.Photo.Properties, ip.Client2.OutUrl, "server2_", differenceMap, wg)
+		wg.Add(2)
+		go ip.downloadAndCompareImage(resp1.Blocks.Photo.Properties, ip.Client1.OutUrl, "_server1", differenceMap, wg, imgPathChan)
+		go ip.downloadAndCompareImage(resp2.Blocks.Photo.Properties, ip.Client2.OutUrl, "_server2", differenceMap, wg, imgPathChan)
 
 		wg.Wait()
+		close(imgPathChan)
 
+		// Collect the image paths
+		var imgPath1, imgPath2 string
+		for path := range imgPathChan {
+			if path != "" {
+				if imgPath1 == "" {
+					imgPath1 = path
+				} else {
+					imgPath2 = path
+				}
+			}
+		}
+
+		// If both images were successfully downloaded, compare them
+		if imgPath1 != "" && imgPath2 != "" {
+			err := HandleImageComparisonAndDeletion(imgPath1, imgPath2)
+			if err != nil {
+				fmt.Printf("Failed to process image comparison and/or deletion: %v\n", err)
+			}
+		}
 		// Compare the responses from the two servers
 		diffs := compareProperties(resp1.Blocks.Photo.Properties, resp2.Blocks.Photo.Properties)
 		ip.compareQrText(resp1.Blocks.Qr2015.Text, resp2.Blocks.Qr2015.Text, differenceMap)
@@ -133,14 +154,35 @@ func (ip *ImageProcessor) processImageProperties(resp1, resp2 *ResponseData, dif
 		differenceMap[fmt.Sprintf("Response from: %s - has empty properties", ip.Client2.URL)] = struct{}{}
 	} else {
 		wg := &sync.WaitGroup{}
-		wg.Add(2)
+		imgPathChan := make(chan string, 2) // Buffer of 2 for the two images
 
 		// Download images concurrently
-		go ip.downloadAndCompareImage(resp1.Photo.Properties, ip.Client1.OutUrl, "server1_", differenceMap, wg)
-		go ip.downloadAndCompareImage(resp2.Photo.Properties, ip.Client2.OutUrl, "server2_", differenceMap, wg)
+		wg.Add(2)
+		go ip.downloadAndCompareImage(resp1.Photo.Properties, ip.Client1.OutUrl, "_server1", differenceMap, wg, imgPathChan)
+		go ip.downloadAndCompareImage(resp2.Photo.Properties, ip.Client2.OutUrl, "_server2", differenceMap, wg, imgPathChan)
 
 		wg.Wait()
+		close(imgPathChan)
 
+		// Collect the image paths
+		var imgPath1, imgPath2 string
+		for path := range imgPathChan {
+			if path != "" {
+				if imgPath1 == "" {
+					imgPath1 = path
+				} else {
+					imgPath2 = path
+				}
+			}
+		}
+
+		// If both images were successfully downloaded, compare them
+		if imgPath1 != "" && imgPath2 != "" {
+			err := HandleImageComparisonAndDeletion(imgPath1, imgPath2)
+			if err != nil {
+				fmt.Printf("Failed to process image comparison and/or deletion: %v\n", err)
+			}
+		}
 		// Compare the responses from the two servers
 		diffs := compareProperties(resp1.Photo.Properties, resp2.Photo.Properties)
 		for _, diff := range diffs {
@@ -150,7 +192,7 @@ func (ip *ImageProcessor) processImageProperties(resp1, resp2 *ResponseData, dif
 }
 
 // downloadAndCompareImage handles the image download and updates differenceMap if necessary.
-func (ip *ImageProcessor) downloadAndCompareImage(properties map[string]interface{}, serverURL, filePrefix string, differenceMap map[string]struct{}, wg *sync.WaitGroup) {
+func (ip *ImageProcessor) downloadAndCompareImage(properties map[string]interface{}, serverURL, filePrefix string, differenceMap map[string]struct{}, wg *sync.WaitGroup, imgPathChan chan<- string) {
 	defer wg.Done()
 	// Download the image
 	imgPath, err := handleImageDownload(properties, serverURL, ip.imageSaveDir, filePrefix)
@@ -158,24 +200,8 @@ func (ip *ImageProcessor) downloadAndCompareImage(properties map[string]interfac
 		differenceMap[fmt.Sprintf("Failed to download image from %s: %v", serverURL, err)] = struct{}{}
 		return
 	}
-
-	// Save the downloaded image path
-	ip.mu.Lock()
-	defer ip.mu.Unlock()
-
-	if filePrefix == "server1_" {
-		ip.imgPath1 = imgPath
-	} else {
-		ip.imgPath2 = imgPath
-	}
-
-	// If both images are downloaded, compare and delete duplicates
-	if ip.imgPath1 != "" && ip.imgPath2 != "" {
-		err = HandleImageComparisonAndDeletion(ip.imgPath1, ip.imgPath2)
-		if err != nil {
-			differenceMap[fmt.Sprintf("Error during image comparison: %v", err)] = struct{}{}
-		}
-	}
+	// Send the downloaded image path to the channel
+	imgPathChan <- imgPath
 }
 
 // handleImageDownload handles the image download based on the response properties.
@@ -197,7 +223,8 @@ func handleImageDownload(properties map[string]interface{}, serverURL, imageSave
 			}
 			fmt.Printf("Directory %s created successfully\n", imageSaveDir)
 		}
-		imagePath := filepath.Join(imageSaveDir, fmt.Sprintf("%s_%s", filePrefix, filepath.Base(downloadLink)))
+		imageName := strings.Split(filepath.Base(downloadLink), ".")
+		imagePath := filepath.Join(imageSaveDir, fmt.Sprintf("%s%s.%s", imageName[0], filePrefix, imageName[1]))
 		file, err := os.Create(imagePath)
 		if err != nil {
 			return "", fmt.Errorf("failed to create image file: %v", err)

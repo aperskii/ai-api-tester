@@ -7,6 +7,8 @@
 out
 gen
 *.csv
-/profiles
+/profiles/set2
+/profiles/set1
+!*/params.json
 /Result
-/tes22222
+/test

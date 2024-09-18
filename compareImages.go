@@ -88,11 +88,15 @@ func HandleImageComparisonAndDeletion(imgPath1, imgPath2 string) error {
 
 	iden, err := CompareImageBytes(imgPath1, imgPath2)
 	if err != nil {
-		return fmt.Errorf("error comparing images: %v", err)
+		return fmt.Errorf("error comparing bytes images: %v", err)
 	}
 
 	if identical || iden {
 		// Images are identical, delete one of them
+		err = os.Remove(imgPath1)
+		if err != nil {
+			return fmt.Errorf("failed to delete image file 1: %v", err)
+		}
 		err = os.Remove(imgPath2)
 		if err != nil {
 			return fmt.Errorf("failed to delete image file 2: %v", err)
