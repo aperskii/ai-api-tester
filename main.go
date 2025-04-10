@@ -85,6 +85,5 @@ func processFolder(folderPath, server1URL, server2URL, imageUrl1Out, imageUrl2Ou
 			}
 		}
 	}
-
 	return nil
 }

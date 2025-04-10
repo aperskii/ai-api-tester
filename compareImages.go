@@ -105,7 +105,6 @@ func HandleImageComparisonAndDeletion(imgPath1, imgPath2 string) error {
 	} else {
 		fmt.Println("Images are different, both will be kept.")
 	}
-
 	return nil
 }
 
