@@ -1,7 +1,7 @@
-# odapi-profiles-tester
+# Ai-Face-Detection-profiles-tester
 
 
-This program tests each profile with params.json against two Odapi servers (SERVER1_URL and SERVER2_URL) using images from a specified directory (in folder). The results are saved to a CSV file named "differences.csv" and the response images are downloaded to a out folder.
+This program tests each profile with params.json against two Ai-Face-Detection servers (SERVER1_URL and SERVER2_URL) using images from a specified directory (in folder). The results are saved to a CSV file named "differences.csv" and the response images are downloaded to a out folder.
 
 ## Installation
 
@@ -30,6 +30,6 @@ To run this program, you'll need to modify the .env file with your own values fo
 
 
 * Go (tested on version 1.x)
-* Odapi servers (SERVER1_URL and SERVER2_URL)
+* Ai-Face-Detection servers (SERVER1_URL and SERVER2_URL)
 * Images for testing in a specified directory
 * .env file with required values
